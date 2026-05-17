@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Flow — Tedarik Zinciri Yönetim Sistemi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="dark"] {
+      --bg:         #0d0d0d;
+      --bg2:        #111111;
+      --surface:    #141414;
+      --surface2:   #1a1a1a;
+      --border:     rgba(255,255,255,0.07);
+      --border-h:   rgba(255,255,255,0.13);
+      --blue:       #f97316;
+      --blue-light: #fb923c;
+      --blue-dim:   rgba(249,115,22,0.12);
+      --blue-glow:  rgba(249,115,22,0.22);
+      --gold:       #f97316;
+      --gold-light: #fb923c;
+      --gold-dim:   rgba(249,115,22,0.08);
+      --text:       #e8e8e8;
+      --text-soft:  #999;
+      --muted:      #555;
+      --sidebar-w:  260px;
+      --topbar-h:   64px;
+      --radius:     12px;
+    }
+    [data-theme="light"] {
+      --bg:         #f5f4f0;
+      --bg2:        #eceae4;
+      --surface:    #ffffff;
+      --surface2:   #f0ede7;
+      --border:     rgba(0,0,0,0.08);
+      --border-h:   rgba(0,0,0,0.14);
+      --blue:       #ea6b10;
+      --blue-light: #f97316;
+      --blue-dim:   rgba(234,107,16,0.1);
+      --blue-glow:  rgba(234,107,16,0.18);
+      --gold:       #ea6b10;
+      --gold-light: #f97316;
+      --gold-dim:   rgba(234,107,16,0.08);
+      --text:       #1a1a1a;
+      --text-soft:  #666;
+      --muted:      #aaa;
+    }
+    [data-theme="light"] body::before { opacity: 0.012; }
+    [data-theme="light"] body::after  {
+      background: radial-gradient(circle, rgba(234,107,16,0.07) 0%, transparent 65%);
+    }
+    [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+    /* Ambient glow top-right */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px; right: -120px;
+      width: 500px; height: 500px;
+      z-index: 0; pointer-events: none;
+      background: radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 65%);
+    }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes shimmer  { from { background-position:-400px 0; } to { background-position:400px 0; } }
+    @keyframes pulse    { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    .fade-up   { animation: fadeUp 0.42s ease both; }
+    .fade-up-1 { animation: fadeUp 0.42s 0.05s ease both; }
+    .fade-up-2 { animation: fadeUp 0.42s 0.11s ease both; }
+    .fade-up-3 { animation: fadeUp 0.42s 0.17s ease both; }
+    .fade-up-4 { animation: fadeUp 0.42s 0.23s ease both; }
+    .fade-in   { animation: fadeIn 0.28s ease both; }
+    .skeleton  {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    #root { display: flex; flex-direction: column; position: relative; z-index: 1; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    p, h1, h2, h3, h4, h5 { text-wrap: pretty; }
+  </style>
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="screens-donerci.jsx"></script>
+  <script type="text/babel" src="screens-tedarikci.jsx"></script>
+  <script type="text/babel" src="supplier-orders.jsx"></script>
+  <script type="text/babel" src="supplier-status.jsx"></script>
+  <script type="text/babel" src="supplier-extras.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
