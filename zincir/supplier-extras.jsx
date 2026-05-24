@@ -25,7 +25,10 @@ const useSecretaryReplies = () => {
 // ── Helper: bugünkü sipariş sayısı (sidebar rozeti) ───────────────────────────
 const countTodayOrders = () => {
   try {
-    return ALL_ORDERS.filter(o => isSameDay(parseTrDate(o.date), TODAY_BASE)).length;
+    const all = (typeof readLiveOrders === 'function' ? readLiveOrders() : []).concat(ALL_ORDERS);
+    const sorted = [...all].sort((a, b) => parseTrDate(b.date) - parseTrDate(a.date));
+    const today = sorted[0] ? parseTrDate(sorted[0].date) : new Date();
+    return all.filter(o => isSameDay(parseTrDate(o.date), today)).length;
   } catch { return 0; }
 };
 
@@ -513,7 +516,7 @@ const PaymentDrawer = ({ open, onClose, editing, setEditing, onSave, customers }
           </select>
         </div>
 
-        <FieldInput label="Tutar (₺)" value={editing.amount} onChange={v => setEditing({ ...editing, amount: v })} placeholder="0.00" type="number" />
+        <FieldInput label="Tutar (€)" value={editing.amount} onChange={v => setEditing({ ...editing, amount: v })} placeholder="0.00" type="number" />
         <FieldInput label="Tarih" value={editing.date} onChange={v => setEditing({ ...editing, date: v })} placeholder="28 Nis 2025" />
 
         <div>

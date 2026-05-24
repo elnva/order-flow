@@ -277,27 +277,82 @@ const SupplierOrdersScreen = ({ supplier }) => (
 );
 
 // ═══ PRODUCT CATALOG (sekreterin foto+fiyat eklediği) ═══════════════════════
-const DEFAULT_SUPPLIER_PRODUCTS = [
-  { id: 1, name: 'Dana Döner Eti', price: 18.50, unit: 'kg', img: null },
-  { id: 2, name: 'Tavuk Döner Eti', price: 11.00, unit: 'kg', img: null },
-  { id: 3, name: 'Karışık Döner', price: 15.00, unit: 'kg', img: null },
-  { id: 4, name: 'Acı Sos', price: 4.50, unit: 'lt', img: null },
-  { id: 5, name: 'Sarımsaklı Sos', price: 4.00, unit: 'lt', img: null },
+// Tedarikçi seçilebilir — her firmanın kendi ürün havuzu var
+const SUPPLIER_FIRMS = [
+  { id: 'devran',    name: 'Devran Döner',  desc: 'Et ürünleri & soslar' },
+  { id: 'mirva',     name: 'Mirva',         desc: 'Patates & sos' },
+  { id: 'baklavaci', name: 'Baklavacı',     desc: 'Tatlı' },
+  { id: 'kervan',    name: 'Kervan Food',   desc: 'Ekmek & sebze' },
 ];
 
+const DEFAULT_FIRM_PRODUCTS = {
+  devran: [],
+  mirva: [],
+  baklavaci: [
+    { id: 1, name: 'Antep Fıstıklı Baklava', price: 65, unit: 'tepsi', img: 'img/antep-fistikli.png' },
+    { id: 2, name: 'Cevizli Baklava', price: 38, unit: 'tepsi', img: 'img/cevizli-baklava.png' },
+    { id: 3, name: 'Antep Havuç Dilimi Baklava', price: 55, unit: 'tepsi', img: 'img/antep-havuc-dilimi.png' },
+    { id: 4, name: 'Antep Kuru Baklava', price: 50, unit: 'tepsi', img: 'img/antep-kuru-baklava.png' },
+    { id: 5, name: 'Fıstık Sarması', price: 68, unit: 'tepsi', img: 'img/fistik-sarmasi.png' },
+    { id: 6, name: 'Bülbül Yuvası', price: 60, unit: 'tepsi', img: 'img/bulbul-yuvasi.png' },
+    { id: 7, name: 'Şöbiyet', price: 62, unit: 'tepsi', img: 'img/sobiyet.png' },
+    { id: 8, name: 'Midye Baklava', price: 48, unit: 'tepsi', img: 'img/midye-baklava-new.png' },
+    { id: 9, name: 'Sütlü Nuriye', price: 32, unit: 'tepsi', img: 'img/sutlu-nuriye.png' },
+    { id: 10, name: 'Soğuk Baklava', price: 58, unit: 'tepsi', img: 'img/soguk-baklava.png' },
+    { id: 11, name: 'Ev Baklavası', price: 42, unit: 'tepsi', img: 'img/ev-baklavasi.png' },
+    { id: 12, name: 'Çikolatalı Kakaolu Baklava', price: 52, unit: 'tepsi', img: 'img/cikolatali-baklava.png' },
+  ],
+  kervan: [],
+};
+
+const productsKey = (firmId) => `zincir-supplier-products-${firmId}`;
+const CATALOG_VERSION_KEY = 'zincir-catalog-version';
+const CATALOG_VERSION = 'reset-2026-05-23-eur-tepsi';
+// Yeni katalog sürümünde (tüm ürünler temizlendi) eski cache'i sil
+try {
+  if (localStorage.getItem(CATALOG_VERSION_KEY) !== CATALOG_VERSION) {
+    SUPPLIER_FIRMS.forEach(f => localStorage.removeItem(productsKey(f.id)));
+    localStorage.setItem(CATALOG_VERSION_KEY, CATALOG_VERSION);
+  }
+} catch {}
+
 const SupplierProductsScreen = () => {
-  const [products, setProducts] = React.useState(() => {
-    try {
-      const saved = localStorage.getItem('zincir-supplier-products');
-      return saved ? JSON.parse(saved) : DEFAULT_SUPPLIER_PRODUCTS;
-    } catch { return DEFAULT_SUPPLIER_PRODUCTS; }
+  const [activeFirm, setActiveFirm] = React.useState('devran');
+  const [productsByFirm, setProductsByFirm] = React.useState(() => {
+    const init = {};
+    SUPPLIER_FIRMS.forEach(f => {
+      try {
+        const saved = localStorage.getItem(productsKey(f.id));
+        const defaults = DEFAULT_FIRM_PRODUCTS[f.id] || [];
+        if (saved) {
+          const list = JSON.parse(saved);
+          // Default kataloğa sonradan eklenen ürünleri (isme göre) otomatik ekle.
+          const existingNames = new Set(list.map(p => (p.name || '').trim().toLowerCase()));
+          const missing = defaults.filter(d => !existingNames.has((d.name || '').trim().toLowerCase()));
+          if (missing.length) {
+            let nextId = Math.max(0, ...list.map(p => p.id || 0));
+            const merged = [...list, ...missing.map(m => ({ ...m, id: ++nextId }))];
+            init[f.id] = merged;
+            try { localStorage.setItem(productsKey(f.id), JSON.stringify(merged)); } catch {}
+          } else {
+            init[f.id] = list;
+          }
+        } else {
+          init[f.id] = defaults;
+        }
+      } catch { init[f.id] = DEFAULT_FIRM_PRODUCTS[f.id] || []; }
+    });
+    return init;
   });
-  const [editing, setEditing] = React.useState(null); // null | {} | product
+  const products = productsByFirm[activeFirm] || [];
+  const [editing, setEditing] = React.useState(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   const persist = (next) => {
-    setProducts(next);
-    try { localStorage.setItem('zincir-supplier-products', JSON.stringify(next)); } catch {}
+    const nextByFirm = { ...productsByFirm, [activeFirm]: next };
+    setProductsByFirm(nextByFirm);
+    try { localStorage.setItem(productsKey(activeFirm), JSON.stringify(next)); } catch {}
+    try { window.dispatchEvent(new CustomEvent('zincir-supplier-products-changed', { detail: { firmId: activeFirm } })); } catch {}
   };
 
   const openNew = () => { setEditing({ name: '', price: '', unit: 'kg', img: null }); setDrawerOpen(true); };
@@ -320,22 +375,73 @@ const SupplierProductsScreen = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setEditing(prev => ({ ...prev, img: ev.target.result }));
+    reader.onload = (ev) => {
+      // Resize the image to keep storage small — orijinal boyutlar localStorage'ı doldurabilir.
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        const ratio = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const resized = canvas.toDataURL('image/jpeg', 0.82);
+        setEditing(prev => ({ ...prev, img: resized }));
+      };
+      img.onerror = () => setEditing(prev => ({ ...prev, img: ev.target.result }));
+      img.src = ev.target.result;
+    };
     reader.readAsDataURL(file);
   };
 
   return (
     <div className="fade-in">
-      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 26, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>
             Ürün Kataloğu
           </h1>
           <p style={{ fontSize: 13, color: 'var(--text-soft)' }}>
-            {products.length} ürün · sekreter buradan ürün fotoğrafı ve fiyatını ekleyebilir
+            {products.length} ürün · {SUPPLIER_FIRMS.find(f => f.id === activeFirm)?.name} · sekreter fotoğraf ve fiyat ekleyebilir
           </p>
         </div>
         <Btn icon="plus" onClick={openNew}>Yeni Ürün Ekle</Btn>
+      </div>
+
+      {/* Tedarikçi seçici tab'lar */}
+      <div style={{
+        display: 'flex', gap: 6, marginBottom: 22, flexWrap: 'wrap',
+        background: 'var(--surface)', padding: 4, borderRadius: 12,
+        border: '1px solid var(--border)', alignSelf: 'flex-start', width: 'fit-content',
+        maxWidth: '100%', overflowX: 'auto',
+      }}>
+        {SUPPLIER_FIRMS.map(f => {
+          const active = activeFirm === f.id;
+          const count = (productsByFirm[f.id] || []).length;
+          return (
+            <button key={f.id} onClick={() => setActiveFirm(f.id)} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 14px', borderRadius: 8, border: 'none',
+              background: active ? 'var(--blue)' : 'transparent',
+              color: active ? '#fff' : 'var(--text-soft)',
+              fontSize: 12, fontFamily: 'DM Sans', fontWeight: active ? 600 : 500,
+              cursor: 'pointer', transition: 'all 0.15s ease', whiteSpace: 'nowrap',
+            }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface2)'; }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <Avatar name={f.name} size={20} active={active} />
+              {f.name}
+              <span style={{
+                fontSize: 10, padding: '1px 7px', borderRadius: 9,
+                background: active ? 'rgba(255,255,255,0.2)' : 'var(--surface2)',
+                color: active ? '#fff' : 'var(--muted)', fontWeight: 600,
+              }}>{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Grid */}
@@ -363,7 +469,7 @@ const SupplierProductsScreen = () => {
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4, fontFamily: 'Syne, sans-serif' }}>{p.name}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
                 <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: 'var(--blue-light)' }}>
-                  ₺{p.price.toLocaleString('tr-TR')}
+                  € {p.price.toLocaleString('tr-TR')}
                 </span>
                 <span style={{ fontSize: 11, color: 'var(--muted)' }}>/ {p.unit}</span>
               </div>
@@ -411,7 +517,13 @@ const SupplierProductsScreen = () => {
                     <div>Fotoğraf yükle</div>
                   </div>
                 )}
-                <input type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onClick={e => { e.target.value = ''; }}
+                  onChange={handlePhoto}
+                  style={{ display: 'none' }}
+                />
               </label>
               {editing.img && (
                 <button onClick={() => setEditing(prev => ({ ...prev, img: null }))} style={{
@@ -444,7 +556,7 @@ const SupplierProductsScreen = () => {
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 2 }}>
                 <label style={{ display: 'block', fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6, fontFamily: 'DM Sans' }}>
-                  Fiyat (₺)
+                  Fiyat (€)
                 </label>
                 <input
                   type="number" min="0" step="0.01"

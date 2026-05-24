@@ -476,7 +476,7 @@ const Topbar = ({ role, activeFirmName, onMenuToggle, theme, onToggleTheme, prof
         <Icon name="menu" size={18} color="currentColor" />
       </button>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="topbar-greeting" style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: 'Syne, sans-serif',
           fontSize: 15, fontWeight: 600,

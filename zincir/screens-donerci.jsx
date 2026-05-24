@@ -287,38 +287,85 @@ const HomeScreen = ({ onNavigate, onFirmSelect }) => {
 };
 
 // ─── SCREEN 2: TEDARİKÇİ / ÜRÜN LİSTESİ ──────────────────────────────────────
-const PRODUCTS = {
-  devran: [
-    { id: 1, name: 'Dana Döner', brand: 'Devran', pack: '30 kg / kalıp', unit: 'kalıp', price: 4500, category: 'Döner', img: 'img/doner-30kg.jpg' },
-    { id: 2, name: 'Dana Döner', brand: 'Devran', pack: '40 kg / kalıp', unit: 'kalıp', price: 6000, category: 'Döner', img: 'img/doner-40kg.jpg' },
-    { id: 3, name: 'Dana Döner', brand: 'Devran', pack: '50 kg / kalıp', unit: 'kalıp', price: 7500, category: 'Döner', img: 'img/doner-50kg.jpg' },
-    { id: 4, name: 'Tavuk Döner', brand: 'Devran', pack: 'kg', unit: 'kg', price: 110, category: 'Döner', img: 'img/tavuk-doner.png' },
-    { id: 5, name: 'Karışık Döner', brand: 'Devran', pack: 'kg', unit: 'kg', price: 150, category: 'Döner', img: 'img/karisik-doner.png' },
-    { id: 6, name: 'Lahmacun', brand: 'Devran', pack: 'adet', unit: 'adet', price: 18, category: 'Et Ürünleri', img: 'img/lahmacun.jpg' },
-    { id: 7, name: 'Acı Sos', brand: 'Devran', pack: 'lt', unit: 'lt', price: 45, category: 'Soslar', img: 'img/aci-sos.jpg' },
-    { id: 8, name: 'Sarımsaklı Sos', brand: 'Devran', pack: 'lt', unit: 'lt', price: 40, category: 'Soslar', img: 'img/sarimsakli-sos.jpg' },
-    { id: 9, name: 'Döner Makinesi', brand: 'Potis', pack: '3 brülör / dikey', unit: 'adet', price: 28500, category: 'Ekipman', img: 'img/doner-makinesi.jpg' },
-  ],
-  mirva: [
-    { id: 20, name: "McCain Fry'n Dip Kaşık Patates", brand: 'McCain', pack: '2.5 kg × 5 / koli', unit: 'koli', price: 1250, category: 'Patates', img: 'img/mccain-frynddip-green.jpg' },
-    { id: 21, name: "McCain Fry'n Dip", brand: 'McCain', pack: '2.5 kg × 5 / koli', unit: 'koli', price: 1180, category: 'Patates', img: 'img/mccain-frynddip-blue.jpg' },
-    { id: 22, name: 'Feast Patates', brand: 'Feast', pack: '2.5 kg × 4 / koli', unit: 'koli', price: 850, category: 'Patates', img: 'img/feast-patates.jpg' },
-    { id: 23, name: 'Mutti Pizza Sauce Classica', brand: 'Mutti', pack: '400g × 12 / koli', unit: 'koli', price: 980, category: 'Sos', img: 'img/mutti-pizza-sauce.jpg' },
-  ],
+const STATIC_PRODUCTS = {
+  devran: [],
+  mirva: [],
   baklavaci: [
-    { id: 30, name: 'Fıstıklı Sarma Baklava', brand: 'Baklavacı', pack: 'kg', unit: 'kg', price: 850, category: 'Baklava', img: 'img/fistikli-baklava.jpg' },
-    { id: 31, name: 'Karışık Baklava Tepsisi', brand: 'Baklavacı', pack: '4 çeşit / tepsi', unit: 'tepsi', price: 1450, category: 'Baklava', img: 'img/karisik-baklava.jpg' },
-    { id: 32, name: 'Klasik Fıstıklı Baklava', brand: 'Baklavacı', pack: 'kg', unit: 'kg', price: 780, category: 'Baklava', img: 'img/sade-baklava.jpg' },
-    { id: 33, name: 'Midye Baklava', brand: 'Baklavacı', pack: 'kg', unit: 'kg', price: 920, category: 'Baklava', img: 'img/midye-baklava.jpg' },
+    { id: 30, name: 'Antep Fıstıklı Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 65, category: 'Baklava', img: 'img/antep-fistikli.png' },
+    { id: 31, name: 'Cevizli Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 38, category: 'Baklava', img: 'img/cevizli-baklava.png' },
+    { id: 32, name: 'Antep Havuç Dilimi Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 55, category: 'Baklava', img: 'img/antep-havuc-dilimi.png' },
+    { id: 33, name: 'Antep Kuru Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 50, category: 'Baklava', img: 'img/antep-kuru-baklava.png' },
+    { id: 34, name: 'Fıstık Sarması', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 68, category: 'Baklava', img: 'img/fistik-sarmasi.png' },
+    { id: 35, name: 'Bülbül Yuvası', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 60, category: 'Baklava', img: 'img/bulbul-yuvasi.png' },
+    { id: 36, name: 'Şöbiyet', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 62, category: 'Baklava', img: 'img/sobiyet.png' },
+    { id: 37, name: 'Midye Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 48, category: 'Baklava', img: 'img/midye-baklava-new.png' },
+    { id: 38, name: 'Sütlü Nuriye', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 32, category: 'Baklava', img: 'img/sutlu-nuriye.png' },
+    { id: 39, name: 'Soğuk Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 58, category: 'Baklava', img: 'img/soguk-baklava.png' },
+    { id: 40, name: 'Ev Baklavası', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 42, category: 'Baklava', img: 'img/ev-baklavasi.png' },
+    { id: 41, name: 'Çikolatalı Kakaolu Baklava', brand: 'Baklavacı', pack: 'tepsi', unit: 'tepsi', price: 52, category: 'Baklava', img: 'img/cikolatali-baklava.png' },
   ],
-  kervan: [
-    { id: 13, name: 'Lavash Ekmeği', unit: 'adet', price: 0.8, category: 'Ekmek' },
-    { id: 14, name: 'Pita Ekmeği', unit: 'adet', price: 0.6, category: 'Ekmek' },
-    { id: 15, name: 'Domates', unit: 'kg', price: 2.5, category: 'Sebze' },
-    { id: 16, name: 'Soğan', unit: 'kg', price: 1.2, category: 'Sebze' },
-    { id: 17, name: 'Maydanoz', unit: 'demet', price: 0.9, category: 'Sebze' },
-  ],
+  kervan: [],
 };
+
+// Hook: tüm firmaların ürün listesi (sekreterin eklediği ürünler dahil)
+const useFirmProducts = (firmId) => {
+  const [override, setOverride] = React.useState(null);
+  React.useEffect(() => {
+    const read = () => {
+      try {
+        const saved = localStorage.getItem(`zincir-supplier-products-${firmId}`);
+        if (!saved) { setOverride(null); return; }
+        const list = JSON.parse(saved);
+        const supplierMap = new Map(list.map(p => [p.id, p]));
+        const base = STATIC_PRODUCTS[firmId] || [];
+        // Tedarikçinin yüklediği foto/fiyat/isim ORİJİNAL ürünün üstüne biner.
+        const merged = base.map(p => {
+          const s = supplierMap.get(p.id);
+          if (!s) return p;
+          return {
+            ...p,
+            name: s.name || p.name,
+            price: typeof s.price === 'number' ? s.price : p.price,
+            unit: s.unit || p.unit,
+            img: s.img != null ? s.img : p.img,
+          };
+        });
+        // Tedarikçi tarafında YENİ eklenmiş (statik listede olmayan) ürünleri sona ekle.
+        list.forEach(s => {
+          if (!base.some(p => p.id === s.id)) {
+            merged.push({
+              id: 'sup-' + firmId + '-' + s.id,
+              name: s.name,
+              brand: FIRM_NAMES[firmId] || '',
+              pack: s.unit,
+              unit: s.unit,
+              price: s.price,
+              category: s.category || 'Tedarikçi Ürünleri',
+              img: s.img || null,
+            });
+          }
+        });
+        setOverride(merged);
+      } catch { setOverride(null); }
+    };
+    read();
+    const handler = (e) => {
+      // Sadece bu firma için tetiklendi mi diye bak (yoksa hepsini yenile)
+      if (!e?.detail?.firmId || e.detail.firmId === firmId) read();
+    };
+    window.addEventListener('zincir-supplier-products-changed', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('zincir-supplier-products-changed', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, [firmId]);
+  // Eğer sekreter düzenlediyse onun listesini göster, yoksa statiği
+  return override !== null ? override : (STATIC_PRODUCTS[firmId] || []);
+};
+
+// Geri uyumluluk: doğrudan PRODUCTS[id] kullanımı için
+const PRODUCTS = STATIC_PRODUCTS;
 const FIRM_NAMES = { devran: 'Devran Döner', mirva: 'Mirva', baklavaci: 'Baklavacı', kervan: 'Kervan Food' };
 const FIRM_DESCS = {
   devran: 'Devran Döner ile son 30 günde 12 sipariş verdiniz.',
@@ -330,7 +377,7 @@ const FIRM_DESCS = {
 const SupplierScreen = ({ firmId, onNavigate, cartItems, setCartItems }) => {
   const [activeCategory, setActiveCategory] = React.useState('Tümü');
   const [viewMode, setViewMode] = React.useState('grid');
-  const products = PRODUCTS[firmId] || [];
+  const products = useFirmProducts(firmId);
   const categories = ['Tümü', ...new Set(products.map(p => p.category))];
   const filtered = activeCategory === 'Tümü' ? products : products.filter(p => p.category === activeCategory);
   const totalInCart = cartItems.reduce((s, i) => s + i.qty, 0);
@@ -513,12 +560,13 @@ const SupplierScreen = ({ firmId, onNavigate, cartItems, setCartItems }) => {
 };
 
 // ─── SCREEN 3: YENİ SİPARİŞ ───────────────────────────────────────────────────
-const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast, addOrder }) => {
+const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast, addOrder, customerName }) => {
   const [search, setSearch] = React.useState('');
   const [note, setNote] = React.useState('');
   const [activeCategory, setActiveCategory] = React.useState('Tümü');
   const [viewMode, setViewMode] = React.useState('grid2');
-  const products = PRODUCTS[firmId] || PRODUCTS['mirva'] || [];
+  const safeFirmId = firmId || 'mirva';
+  const products = useFirmProducts(safeFirmId);
   const categories = ['Tümü', ...new Set(products.map(p => p.category))];
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tümü' || p.category === activeCategory;
@@ -545,7 +593,7 @@ const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast
 
   const subtotal = cartItems.reduce((s, i) => s + (i.price * i.qty), 0);
   const total = subtotal;
-  const fmt = (n) => '₺' + n.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
+  const fmt = (n) => '€ ' + n.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
 
   // Card-level qty selector state per product
   const QtyControl = ({ product }) => {
@@ -871,6 +919,7 @@ const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast
                   id: orderId,
                   firm: FIRM_NAMES[firmId] || 'Tedarikçi',
                   firmId: firmId,
+                  customer: customerName || 'Müşteri',
                   date: dateStr,
                   amount: total,
                   status: 'bekliyor',

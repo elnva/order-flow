@@ -35,10 +35,60 @@ const EXTRA_ORDERS = [
     products: [{ name: 'Dana Döner Eti', qty: 8, unit: 'kg' }], note: '' },
 ];
 
-// Birleşik liste
-const ALL_ORDERS = [...SUPPLIER_ORDERS, ...EXTRA_ORDERS];
+// Statik mock listesi (geçmiş)
+const MOCK_ORDERS = [...SUPPLIER_ORDERS, ...EXTRA_ORDERS];
 
-// ── Fiyatlar (KDV dahil, ₺/birim) ─────────────────────────────────────────────
+// Dönerci panelinden gelen canlı siparişleri okur ve tedarikçi formatına çevirir
+const readLiveOrders = () => {
+  try {
+    const saved = localStorage.getItem('zincir-orders');
+    if (!saved) return [];
+    const list = JSON.parse(saved);
+    return list
+      .filter(o => o.firmId === 'devran') // sadece bu tedarikçiye gelenler
+      .map(o => ({
+        id: o.id,
+        customer: o.customer || o.firm || 'Bilinmeyen Müşteri',
+        donerciFirmId: o.firmId,
+        date: o.date,
+        products: (o.items || []).map(it => ({
+          name: it.name, qty: it.qty, unit: it.unit, price: it.price,
+        })),
+        note: o.note || '',
+        _live: true,
+      }));
+  } catch { return []; }
+};
+
+// Hook: canlı siparişleri dinler (aynı sekme + diğer sekmeler)
+const useAllOrders = () => {
+  const [live, setLive] = React.useState(readLiveOrders);
+  React.useEffect(() => {
+    const refresh = () => setLive(readLiveOrders());
+    window.addEventListener('zincir-orders-changed', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('zincir-orders-changed', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+  return [...live, ...MOCK_ORDERS];
+};
+
+// Yardımcı: müşterinin profil aramasını uyumlu kılmak için iki türü de eşle
+const matchesCustomer = (order, name) => {
+  if (!order || !name) return false;
+  if (order.customer === name) return true;
+  // "Türk Döner" / "Türk Döner Ltd." gibi varyasyonlar
+  const a = order.customer.toLowerCase().replace(/\s+(ltd|a\.?ş\.?|s\.?r\.?l\.?)\.?$/i, '').trim();
+  const b = name.toLowerCase().replace(/\s+(ltd|a\.?ş\.?|s\.?r\.?l\.?)\.?$/i, '').trim();
+  return a === b;
+};
+
+// Geri-uyumluluk: bazı yerlerde ALL_ORDERS değişkeni okunuyor olabilir
+const ALL_ORDERS = MOCK_ORDERS;
+
+// ── Fiyatlar (KDV dahil, €/birim) ─────────────────────────────────────────────
 const PRICE_MAP = {
   'Dana Döner Eti': 145,
   'Tavuk Döner Eti': 110,
@@ -46,19 +96,25 @@ const PRICE_MAP = {
   'Acı Sos': 45,
   'Sarımsaklı Sos': 40,
 };
-const priceFor = (name) => PRICE_MAP[name] ?? 0;
-const fmtTRY = (n) => '₺' + Math.round(n).toLocaleString('tr-TR');
+const priceFor = (name, override) => {
+  if (typeof override === 'number' && !isNaN(override) && override > 0) return override;
+  return PRICE_MAP[name] ?? 0;
+};
+const fmtTRY = (n) => '€ ' + Math.round(n).toLocaleString('tr-TR');
 
-const lineTotal = (p) => priceFor(p.name) * p.qty;
+const lineTotal = (p) => priceFor(p.name, p.price) * p.qty;
 const orderTotal = (o) => o.products.reduce((s, p) => s + lineTotal(p), 0);
 const orderSubtotal = (o) => orderTotal(o) / 1.2;
 const orderVat = (o) => orderTotal(o) - orderSubtotal(o);
 
-// ── Bugünün tarihi (mock data baz alınarak) ───────────────────────────────────
-const TODAY_BASE = (() => {
-  const sorted = [...ALL_ORDERS].sort((a, b) => parseTrDate(b.date) - parseTrDate(a.date));
+// ── Bugünün tarihi (canlı + mock siparişlerden en yenisi) ─────────────────────
+const getTodayBase = () => {
+  const all = [...readLiveOrders(), ...MOCK_ORDERS];
+  const sorted = all.sort((a, b) => parseTrDate(b.date) - parseTrDate(a.date));
   return sorted[0] ? parseTrDate(sorted[0].date) : new Date();
-})();
+};
+// Modül seviyesinde başlangıç değeri (geri uyumluluk için tutulur)
+let TODAY_BASE = getTodayBase();
 const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 // ── Excel/CSV indir ────────────────────────────────────────────────────────────
@@ -113,9 +169,9 @@ const printCustomerReport = (customer, orders, supplier) => {
         <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.name}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right">${p.qty}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.unit}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right">${(priceFor(p.name)/1.2).toFixed(2)} ₺</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right">${(priceFor(p.name)*p.qty*0.2/1.2).toFixed(2)} ₺</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:600">${(priceFor(p.name)*p.qty).toFixed(2)} ₺</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right">€ ${(priceFor(p.name)/1.2).toFixed(2)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right">€ ${(priceFor(p.name)*p.qty*0.2/1.2).toFixed(2)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:600">€ ${(priceFor(p.name)*p.qty).toFixed(2)}</td>
       </tr>
     `).join('')}
   `).join('');
@@ -159,9 +215,9 @@ const printCustomerReport = (customer, orders, supplier) => {
     </table>
     <div class="totals">
       <div style="text-align:right;color:#555">
-        <div>Ara Toplam: ${grandSubtotal.toFixed(2)} ₺</div>
-        <div>KDV (%20): ${grandVat.toFixed(2)} ₺</div>
-        <div style="margin-top:8px;color:#1a1a1a"><strong>TOPLAM: ${grandTotal.toFixed(2)} ₺</strong></div>
+        <div>Ara Toplam: € ${grandSubtotal.toFixed(2)}</div>
+        <div>KDV (%20): € ${grandVat.toFixed(2)}</div>
+        <div style="margin-top:8px;color:#1a1a1a"><strong>TOPLAM: € ${grandTotal.toFixed(2)}</strong></div>
       </div>
     </div>
     <script>window.onload = () => setTimeout(() => window.print(), 300);</script>
@@ -303,10 +359,11 @@ const SecretaryReplyBlock = ({ order, replies, setReply }) => {
 };
 
 // ── Müşteri Detay Sayfası ─────────────────────────────────────────────────────
-const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast }) => {
+const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, todayBase }) => {
   const [expandedOrderId, setExpandedOrderId] = React.useState(null);
   const [replies, setReply] = useSecretaryReplies();
   const { getStatus, getStatusMeta, setStatus } = useOrderStatuses();
+  const TODAY = todayBase || TODAY_BASE;
   const customerMeta = CUSTOMERS_DATA.find(c => c.name === customer) || {};
   const phone = customerMeta.contact || '';
   const address = customerMeta.address || '—';
@@ -315,8 +372,8 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast }) =
   const groups = { bugun: [], dun: [], buHafta: [], gecenHafta: [], dahaOnce: [] };
   orders.forEach(o => {
     const d = parseTrDate(o.date);
-    const diffDays = Math.floor((TODAY_BASE - d) / (1000 * 60 * 60 * 24));
-    if (isSameDay(d, TODAY_BASE)) groups.bugun.push(o);
+    const diffDays = Math.floor((TODAY - d) / (1000 * 60 * 60 * 24));
+    if (isSameDay(d, TODAY)) groups.bugun.push(o);
     else if (diffDays === 1) groups.dun.push(o);
     else if (diffDays <= 7) groups.buHafta.push(o);
     else if (diffDays <= 14) groups.gecenHafta.push(o);
@@ -324,7 +381,7 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast }) =
   });
 
   const sectionTitles = [
-    ['bugun',       `BUGÜN (${TODAY_BASE.getDate()} ${TR_MONTHS[TODAY_BASE.getMonth()]} ${TODAY_BASE.getFullYear()})`],
+    ['bugun',       `BUGÜN (${TODAY.getDate()} ${TR_MONTHS[TODAY.getMonth()]} ${TODAY.getFullYear()})`],
     ['dun',         'DÜN'],
     ['buHafta',     'BU HAFTA'],
     ['gecenHafta',  'GEÇEN HAFTA'],
@@ -434,7 +491,7 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast }) =
                 const sub = orderSubtotal(o);
                 const vat = orderVat(o);
                 const summary = `${o.products[0].qty} ${o.products[0].unit} ${o.products[0].name}${o.products.length > 1 ? `, +${o.products.length - 1}` : ''}`;
-                const isToday = isSameDay(parseTrDate(o.date), TODAY_BASE);
+                const isToday = isSameDay(parseTrDate(o.date), TODAY);
                 const timeOrDate = isToday
                   ? o.date.split('·')[1]?.trim()
                   : o.date.split('·')[0]?.trim();
@@ -567,11 +624,17 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast }) =
 
 // ═══ ANA EKRAN — Bugün sipariş veren müşteriler ═══════════════════════════════
 const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
+  const allOrdersLive = useAllOrders();
+  const todayBase = React.useMemo(() => {
+    const sorted = [...allOrdersLive].sort((a, b) => parseTrDate(b.date) - parseTrDate(a.date));
+    return sorted[0] ? parseTrDate(sorted[0].date) : new Date();
+  }, [allOrdersLive]);
+
   const [selectedCustomer, setSelectedCustomer] = React.useState(null);
   const [search, setSearch] = React.useState('');
   const [viewed, setViewed] = React.useState(() => {
     try {
-      const saved = localStorage.getItem('zincir-viewed-customers-' + TODAY_BASE.toDateString());
+      const saved = localStorage.getItem('zincir-viewed-customers-' + todayBase.toDateString());
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch { return new Set(); }
   });
@@ -580,23 +643,24 @@ const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
     const next = new Set(viewed);
     next.add(customerName);
     setViewed(next);
-    try { localStorage.setItem('zincir-viewed-customers-' + TODAY_BASE.toDateString(), JSON.stringify([...next])); } catch {}
+    try { localStorage.setItem('zincir-viewed-customers-' + todayBase.toDateString(), JSON.stringify([...next])); } catch {}
   };
 
   // Bugünkü siparişleri müşteri başına grupla
-  const todayOrders = ALL_ORDERS.filter(o => isSameDay(parseTrDate(o.date), TODAY_BASE));
+  const todayOrders = allOrdersLive.filter(o => isSameDay(parseTrDate(o.date), todayBase));
   const grouped = {};
   todayOrders.forEach(o => {
-    if (!grouped[o.customer]) grouped[o.customer] = { customer: o.customer, orders: [], total: 0 };
+    if (!grouped[o.customer]) grouped[o.customer] = { customer: o.customer, orders: [], total: 0, hasLive: false };
     grouped[o.customer].orders.push(o);
     grouped[o.customer].total += orderTotal(o);
+    if (o._live) grouped[o.customer].hasLive = true;
   });
   const customerList = Object.values(grouped)
     .filter(c => c.customer.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => b.total - a.total);
 
   if (selectedCustomer) {
-    const customerOrders = ALL_ORDERS
+    const customerOrders = allOrdersLive
       .filter(o => o.customer === selectedCustomer)
       .sort((a, b) => parseTrDate(b.date) - parseTrDate(a.date));
     return (
@@ -606,6 +670,7 @@ const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
         supplier={supplier}
         onBack={() => setSelectedCustomer(null)}
         showToast={showToast}
+        todayBase={todayBase}
       />
     );
   }

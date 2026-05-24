@@ -4,8 +4,20 @@ const App = () => {
   const [currentScreen, setCurrentScreen] = React.useState('home');
   const [activeFirm, setActiveFirm] = React.useState('devran');
   const [cartItems, setCartItems] = React.useState([]);
-  const [orders, setOrders] = React.useState(() => (typeof ORDERS_DATA !== 'undefined' ? ORDERS_DATA : []));
-  const addOrder = (order) => setOrders(prev => [order, ...prev]);
+  const [orders, setOrders] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('zincir-orders');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return (typeof ORDERS_DATA !== 'undefined' ? ORDERS_DATA : []);
+  });
+  const persistOrders = (next) => {
+    setOrders(next);
+    try { localStorage.setItem('zincir-orders', JSON.stringify(next)); } catch {}
+    // Tedarikçi paneline anlık duyur (aynı sekme içinde)
+    try { window.dispatchEvent(new CustomEvent('zincir-orders-changed')); } catch {}
+  };
+  const addOrder = (order) => persistOrders([order, ...orders]);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [toast, setToast] = React.useState({ visible: false, message: '' });
 
@@ -77,7 +89,7 @@ const App = () => {
       switch (currentScreen) {
         case 'home':      return <HomeScreen onNavigate={navigate} onFirmSelect={setActiveFirm} />;
         case 'supplier':  return <SupplierScreen firmId={activeFirm} onNavigate={navigate} cartItems={cartItems} setCartItems={setCartItems} />;
-        case 'new-order': return <NewOrderScreen firmId={activeFirm} cartItems={cartItems} setCartItems={setCartItems} onNavigate={navigate} showToast={showToast} addOrder={addOrder} />;
+        case 'new-order': return <NewOrderScreen firmId={activeFirm} cartItems={cartItems} setCartItems={setCartItems} onNavigate={navigate} showToast={showToast} addOrder={addOrder} customerName={donerciProfile.company} />;
         case 'orders':    return <OrdersScreen onNavigate={navigate} firmId={activeFirm} orders={orders} showToast={showToast} />;
         case 'debt':      return <DebtScreen />;
         case 'profile':   return <ProfileScreen profile={profile} onSave={saveProfile} />;
@@ -228,6 +240,7 @@ const App = () => {
       <style>{`
         @media (max-width: 768px) {
           .mobile-menu-btn { display: flex !important; }
+          .topbar-greeting { display: none !important; }
         }
         @media (min-width: 769px) {
           .mobile-menu-btn { display: none !important; }
