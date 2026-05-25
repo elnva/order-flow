@@ -104,6 +104,11 @@
     #root { display: flex; flex-direction: column; position: relative; z-index: 1; }
     :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     p, h1, h2, h3, h4, h5 { text-wrap: pretty; }
+    /* Responsive shell — daralt padding'leri küçük ekranlarda */
+    @media (max-width: 768px) {
+      main          { padding: 16px 12px 16px !important; }
+      header, footer { padding-left: 14px !important; padding-right: 14px !important; }
+    }
   </style>
   <!-- React + Babel -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>

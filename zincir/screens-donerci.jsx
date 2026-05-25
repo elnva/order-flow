@@ -561,6 +561,7 @@ const SupplierScreen = ({ firmId, onNavigate, cartItems, setCartItems }) => {
 
 // ─── SCREEN 3: YENİ SİPARİŞ ───────────────────────────────────────────────────
 const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast, addOrder, customerName }) => {
+  const isMobile = useIsMobile();
   const [search, setSearch] = React.useState('');
   const [note, setNote] = React.useState('');
   const [activeCategory, setActiveCategory] = React.useState('Tümü');
@@ -633,7 +634,7 @@ const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast
   };
 
   return (
-    <div className="fade-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 340px', gap: 24, alignItems: 'start' }}>
+    <div className="fade-in" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 340px', gap: 24, alignItems: 'start' }}>
       {/* ── LEFT: products column ── */}
       <div style={{ minWidth: 0 }}>
         {/* Breadcrumb */}
@@ -749,7 +750,7 @@ const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast
             ))}
           </div>
         ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid3' ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, minmax(0,1fr))' : (viewMode === 'grid3' ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: isMobile ? 12 : 18 }}>
           {filtered.map(product => (
             <div key={product.id} style={{
               background: 'var(--surface)', border: '1px solid var(--border)',
@@ -809,9 +810,10 @@ const NewOrderScreen = ({ firmId, cartItems, setCartItems, onNavigate, showToast
 
       {/* ── RIGHT: sticky cart panel ── */}
       <aside style={{
-        position: 'sticky', top: 16,
+        position: isMobile ? 'static' : 'sticky', top: 16,
         background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 14, padding: 18, maxHeight: 'calc(100vh - 32px)',
+        borderRadius: 14, padding: 18,
+        maxHeight: isMobile ? 'none' : 'calc(100vh - 32px)',
         display: 'flex', flexDirection: 'column',
       }}>
         {/* Cart header */}
@@ -970,6 +972,7 @@ const normalizeStatus = (s) => {
 };
 
 const OrdersScreen = ({ onNavigate, firmId, orders, showToast }) => {
+  const isMobile = useIsMobile();
   const [selectedOrder, setSelectedOrder] = React.useState(null);
   const { getStatus, getStatusMeta, setStatus } = useOrderStatuses();
   const allOrders = orders || ORDERS_DATA;
@@ -1008,8 +1011,8 @@ const OrdersScreen = ({ onNavigate, firmId, orders, showToast }) => {
         </div>
       )}
 
-      {/* Table */}
-      {filtered.length > 0 && (
+      {/* Table (desktop) */}
+      {filtered.length > 0 && !isMobile && (
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{
           display: 'grid', gridTemplateColumns: '90px 1fr 90px 100px 110px 80px',
@@ -1047,6 +1050,37 @@ const OrdersScreen = ({ onNavigate, firmId, orders, showToast }) => {
           </div>
         ))}
       </div>
+      )}
+
+      {/* Cards (mobile) */}
+      {filtered.length > 0 && isMobile && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {filtered.map((order) => (
+            <div key={order.id}
+              onClick={() => setSelectedOrder(order)}
+              style={{
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Avatar name={order.firm} size={32} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{order.firm}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{order.id} · {order.date}</div>
+                </div>
+                <StatusBadge status={liveStatus(order)} size="sm" />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>€ {order.amount.toFixed(2)}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--blue-light)', fontWeight: 500 }}>
+                  <Icon name="eye" size={13} color="currentColor" /> Detay
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Order detail drawer */}
@@ -1105,6 +1139,7 @@ const OrdersScreen = ({ onNavigate, firmId, orders, showToast }) => {
 
 // ─── SCREEN 7: TOPLAM BORÇ ────────────────────────────────────────────────────
 const DebtScreen = () => {
+  const isMobile = useIsMobile();
   const debts = [
     { firm: 'Devran Döner', firmId: 'devran', amount: 1240, max: 1500, due: '05 May 2025', overdue: false },
     { firm: 'Mirva', firmId: 'mirva', amount: 580, max: 1000, due: '01 May 2025', overdue: false },
@@ -1170,6 +1205,7 @@ const DebtScreen = () => {
 
       {/* Open invoices */}
       <SectionLabel style={{ marginBottom: 12 }}>Açık Faturalar</SectionLabel>
+      {!isMobile && (
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 90px 90px 100px', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
           {['No', 'Firma', 'Tutar', 'Tarih', 'Vade'].map(h => (
@@ -1199,6 +1235,32 @@ const DebtScreen = () => {
           </div>
         ))}
       </div>
+      )}
+
+      {/* Open invoices — cards (mobile) */}
+      {isMobile && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {openInvoices.map((inv) => (
+            <div key={inv.id} style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '14px 16px',
+              display: 'flex', flexDirection: 'column', gap: 8,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{inv.firm}</span>
+                <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>€ {inv.amount.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{inv.id} · {inv.date}</span>
+                {inv.overdue
+                  ? <Badge status="beklemede">Vadesi Geçti</Badge>
+                  : <span style={{ fontSize: 11, color: 'var(--text-soft)' }}>Vade: {inv.due}</span>
+                }
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

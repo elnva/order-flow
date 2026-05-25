@@ -360,6 +360,7 @@ const SecretaryReplyBlock = ({ order, replies, setReply }) => {
 
 // ── Müşteri Detay Sayfası ─────────────────────────────────────────────────────
 const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, todayBase }) => {
+  const isMobile = useIsMobile();
   const [expandedOrderId, setExpandedOrderId] = React.useState(null);
   const [replies, setReply] = useSecretaryReplies();
   const { getStatus, getStatusMeta, setStatus } = useOrderStatuses();
@@ -501,6 +502,29 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, tod
                   <div key={o.id} style={{
                     borderBottom: i < list.length - 1 ? '1px solid var(--border)' : 'none',
                   }}>
+                    {isMobile ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '13px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{o.id} · {timeOrDate}</span>
+                        <StatusBadge status={orderStatus} size="sm" />
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text)' }}>{summary}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontSize: 16, color: 'var(--text)', fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>
+                          {fmtTRY(total)}
+                        </span>
+                        <button onClick={() => setExpandedOrderId(isExpanded ? null : o.id)} style={{
+                          padding: '7px 14px', borderRadius: 8,
+                          background: isExpanded ? 'var(--blue)' : 'var(--blue-dim)',
+                          border: '1px solid rgba(91,143,168,0.25)',
+                          color: isExpanded ? '#fff' : 'var(--blue-light)',
+                          fontSize: 11, fontFamily: 'DM Sans', fontWeight: 600, cursor: 'pointer',
+                        }}>
+                          {isExpanded ? 'Kapat' : 'Detay'}
+                        </button>
+                      </div>
+                    </div>
+                    ) : (
                     <div style={{
                       display: 'grid', gridTemplateColumns: '95px 78px 1fr 120px 100px 88px',
                       alignItems: 'center', gap: 10,
@@ -530,14 +554,15 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, tod
                         {isExpanded ? 'Kapat' : 'Detay'}
                       </button>
                     </div>
+                    )}
 
                     {isExpanded && (
                       <div style={{
-                        background: 'var(--bg)', padding: '16px 22px 20px',
+                        background: 'var(--bg)', padding: isMobile ? '14px 16px 18px' : '16px 22px 20px',
                         borderTop: '1px solid var(--border)',
                       }}>
                         <div style={{
-                          display: 'grid', gridTemplateColumns: '1fr 80px 60px 130px 130px',
+                          display: isMobile ? 'none' : 'grid', gridTemplateColumns: '1fr 80px 60px 130px 130px',
                           padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 10,
                           color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600,
                         }}>
@@ -548,6 +573,18 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, tod
                           <span style={{ textAlign: 'right' }}>Satır Toplamı</span>
                         </div>
                         {o.products.map((p, pi) => (
+                          isMobile ? (
+                          <div key={pi} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                            padding: '10px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
+                          }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ color: 'var(--text)' }}>{p.name}</div>
+                              <div style={{ color: 'var(--text-soft)', fontSize: 11, marginTop: 2 }}>{p.qty} {p.unit} × {fmtTRY(priceFor(p.name))}</div>
+                            </div>
+                            <span style={{ color: 'var(--text)', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmtTRY(lineTotal(p))}</span>
+                          </div>
+                          ) : (
                           <div key={pi} style={{
                             display: 'grid', gridTemplateColumns: '1fr 80px 60px 130px 130px',
                             padding: '10px 0', borderBottom: '1px solid var(--border)',
@@ -561,6 +598,7 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, tod
                               {fmtTRY(lineTotal(p))}
                             </span>
                           </div>
+                          )
                         ))}
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 12, gap: 32 }}>
@@ -624,6 +662,7 @@ const CustomerDetailView = ({ customer, orders, supplier, onBack, showToast, tod
 
 // ═══ ANA EKRAN — Bugün sipariş veren müşteriler ═══════════════════════════════
 const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
+  const isMobile = useIsMobile();
   const allOrdersLive = useAllOrders();
   const todayBase = React.useMemo(() => {
     const sorted = [...allOrdersLive].sort((a, b) => parseTrDate(b.date) - parseTrDate(a.date));
@@ -735,8 +774,9 @@ const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
               key={c.customer}
               onClick={() => { markViewed(c.customer); setSelectedCustomer(c.customer); }}
               style={{
-                width: '100%', display: 'grid', gridTemplateColumns: '52px 1fr auto auto auto',
-                gap: 16, alignItems: 'center', padding: '16px 20px',
+                width: '100%', display: 'grid',
+                gridTemplateColumns: isMobile ? '44px 1fr auto' : '52px 1fr auto auto auto',
+                gap: isMobile ? 12 : 16, alignItems: 'center', padding: '16px 20px',
                 background: 'transparent', border: 'none',
                 borderBottom: i < customerList.length - 1 ? '1px solid var(--border)' : 'none',
                 cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s ease',
@@ -744,7 +784,7 @@ const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <Avatar name={c.customer} size={44} />
+              <Avatar name={c.customer} size={isMobile ? 40 : 44} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
@@ -760,21 +800,25 @@ const SupplierOrdersScreenNew = ({ supplier, showToast }) => {
                   )}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 2 }}>
-                  Bugünkü siparişler
+                  {isMobile ? `${c.orders.length} sipariş bugün` : 'Bugünkü siparişler'}
                 </div>
               </div>
-              <div style={{ textAlign: 'right', minWidth: 90 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                  {c.orders.length}
+              {!isMobile && (
+                <div style={{ textAlign: 'right', minWidth: 90 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+                    {c.orders.length}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)' }}>sipariş bugün</div>
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--muted)' }}>sipariş bugün</div>
-              </div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: 'var(--blue-light)', minWidth: 90, textAlign: 'right' }}>
+              )}
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: isMobile ? 16 : 18, fontWeight: 700, color: 'var(--blue-light)', minWidth: isMobile ? 0 : 90, textAlign: 'right' }}>
                 {fmtTRY(c.total)}
               </div>
-              <div style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center' }}>
-                <Icon name="chevron" size={16} color="currentColor" />
-              </div>
+              {!isMobile && (
+                <div style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center' }}>
+                  <Icon name="chevron" size={16} color="currentColor" />
+                </div>
+              )}
             </button>
             );
           })}

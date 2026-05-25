@@ -1,4 +1,19 @@
 
+// ─── RESPONSIVE HOOK ──────────────────────────────────────────────────────────
+// Tek kaynak: ekran < breakpoint ise mobil sayılır. Resize'a tepki verir.
+const useIsMobile = (breakpoint = 768) => {
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
+  );
+  React.useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', onResize);
+    onResize();
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
+  return isMobile;
+};
+
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size = 16, color = 'currentColor', style = {} }) => {
   const icons = {
@@ -231,7 +246,7 @@ const Sidebar = ({ activeFirm, onFirmSelect, currentScreen, onScreenChange, role
     zIndex: 200,
   };
 
-  const isDesktop = window.innerWidth >= 768;
+  const isDesktop = !useIsMobile();
 
   return (
     <>
@@ -665,5 +680,5 @@ const SkeletonCard = () => (
 // Export all shared components
 Object.assign(window, {
   Icon, Badge, Avatar, Btn, SectionLabel, Logo, Sidebar, Topbar, Footer,
-  Toast, Drawer, EmptyState, SkeletonCard, FIRMS,
+  Toast, Drawer, EmptyState, SkeletonCard, FIRMS, useIsMobile,
 });

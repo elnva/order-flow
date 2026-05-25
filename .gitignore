@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Node (for any future tooling / build step)
+node_modules/
+dist/
+build/
+*.log
+
+# Environment & secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Supabase local dev (if adopted later)
+supabase/.branches
+supabase/.temp

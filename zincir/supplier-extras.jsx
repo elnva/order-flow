@@ -34,6 +34,7 @@ const countTodayOrders = () => {
 
 // ═══ MÜŞTERİLER EKRANI ════════════════════════════════════════════════════════
 const SupplierCustomersScreen = () => {
+  const isMobile = useIsMobile();
   const [customers, setCustomers] = React.useState(() => {
     try {
       const saved = localStorage.getItem('zincir-customers');
@@ -134,6 +135,7 @@ const SupplierCustomersScreen = () => {
         />
       </div>
 
+      {!isMobile && (
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
         {/* header */}
         <div style={{
@@ -180,6 +182,49 @@ const SupplierCustomersScreen = () => {
           </div>
         ))}
       </div>
+      )}
+
+      {/* Cards (mobile) */}
+      {isMobile && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {filtered.length === 0 && (
+            <div style={{ padding: '40px', textAlign: 'center', fontSize: 13, color: 'var(--muted)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14 }}>
+              Müşteri bulunamadı.
+            </div>
+          )}
+          {filtered.map((c) => (
+            <div key={c.id} style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 14, padding: '14px 16px',
+              display: 'flex', flexDirection: 'column', gap: 12,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar name={c.name} size={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>İlk sipariş · {c.firstOrder || '—'}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: 'var(--text-soft)' }}>
+                <div style={{ display: 'flex', gap: 6 }}><Icon name="phone" size={12} color="var(--muted)" /> {c.contact || '—'}</div>
+                <div style={{ display: 'flex', gap: 6 }}><Icon name="home" size={12} color="var(--muted)" /> {c.address || '—'}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => openEdit(c)} style={{
+                  flex: 1, padding: '9px 0', borderRadius: 8,
+                  background: 'var(--blue-dim)', border: '1px solid rgba(249,115,22,0.25)',
+                  color: 'var(--blue-light)', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, cursor: 'pointer',
+                }}>Düzenle</button>
+                <button onClick={() => handleDelete(c.id)} style={{
+                  flex: 1, padding: '9px 0', borderRadius: 8,
+                  background: 'rgba(200,80,80,0.1)', border: '1px solid rgba(200,80,80,0.25)',
+                  color: '#e08a8a', fontSize: 12, fontFamily: 'DM Sans', cursor: 'pointer',
+                }}>Sil</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Drawer */}
       <Drawer
@@ -222,6 +267,7 @@ const DEFAULT_PAYMENTS = [
 const PAYMENT_METHODS = ['Nakit', 'Banka', 'Çek', 'Kart'];
 
 const SupplierDebtScreen = () => {
+  const isMobile = useIsMobile();
   const [payments, setPayments] = React.useState(() => {
     try {
       const saved = localStorage.getItem('zincir-payments');
@@ -321,7 +367,7 @@ const SupplierDebtScreen = () => {
           <Btn icon="plus" onClick={() => openNewPayment(selectedCustomer)}>Ödeme Ekle</Btn>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 24 }}>
           {[
             { label: 'Toplam Alacak', value: t.invoiced, color: 'var(--text)' },
             { label: 'Tahsil Edilen', value: t.paid, color: '#7bc49a' },
@@ -338,6 +384,7 @@ const SupplierDebtScreen = () => {
         </div>
 
         <SectionLabel style={{ marginBottom: 10 }}>Ödeme Geçmişi</SectionLabel>
+        {!isMobile && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
           <div style={{
             display: 'grid', gridTemplateColumns: '120px 100px 1fr 130px 50px',
@@ -382,6 +429,41 @@ const SupplierDebtScreen = () => {
             </div>
           ))}
         </div>
+        )}
+
+        {/* Ödeme geçmişi — cards (mobile) */}
+        {isMobile && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {customerPayments.length === 0 && (
+              <div style={{ padding: '32px', textAlign: 'center', fontSize: 13, color: 'var(--muted)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                Henüz ödeme kaydı yok. <button onClick={() => openNewPayment(selectedCustomer)} style={{ background: 'none', border: 'none', color: 'var(--blue-light)', cursor: 'pointer', textDecoration: 'underline', fontSize: 13 }}>Yeni ödeme ekleyin</button>.
+              </div>
+            )}
+            {customerPayments.map((p) => (
+              <div key={p.id} style={{
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '14px 16px',
+                display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ padding: '3px 9px', borderRadius: 5, background: 'var(--surface2)', fontSize: 11, color: 'var(--text)', border: '1px solid var(--border)' }}>{p.method}</span>
+                  <span style={{ color: '#7bc49a', fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700 }}>+{fmtTRY(p.amount)}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-soft)' }}>{p.date}</span>
+                  <button onClick={() => handleDeletePayment(p.id)} style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'var(--muted)', fontSize: 11, fontFamily: 'DM Sans',
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                  }}>
+                    <Icon name="x" size={13} color="currentColor" /> Sil
+                  </button>
+                </div>
+                {p.note && <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{p.note}</div>}
+              </div>
+            ))}
+          </div>
+        )}
 
         <PaymentDrawer
           open={drawerOpen} onClose={() => setDrawerOpen(false)}
@@ -411,7 +493,7 @@ const SupplierDebtScreen = () => {
       </div>
 
       {/* 3 kutu özet */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 24 }}>
         {[
           { label: 'Toplam Alacak',  value: totalInvoiced,  hint: `${customerRows.length} müşteri`, color: 'var(--text)', accent: 'rgba(255,255,255,0.04)' },
           { label: 'Tahsil Edilen',  value: totalPaid,      hint: `${payments.length} ödeme kaydı`, color: '#7bc49a', accent: 'rgba(123,196,154,0.08)' },
@@ -437,6 +519,7 @@ const SupplierDebtScreen = () => {
       </div>
 
       <SectionLabel style={{ marginBottom: 10 }}>Müşteri Bakiyeleri</SectionLabel>
+      {!isMobile && (
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
         <div style={{
           display: 'grid', gridTemplateColumns: '52px 1fr 110px 110px 130px 40px',
@@ -481,6 +564,46 @@ const SupplierDebtScreen = () => {
           </div>
         ))}
       </div>
+      )}
+
+      {/* Müşteri bakiyeleri — cards (mobile) */}
+      {isMobile && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {customerRows.map((c) => (
+            <div key={c.name}
+              onClick={() => setSelectedCustomer(c.name)}
+              style={{
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 14, padding: '14px 16px', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar name={c.name} size={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{c.orders} sipariş</div>
+                </div>
+                <Icon name="chevron" size={16} color="var(--muted)" />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Alacak</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, marginTop: 2 }}>{fmtTRY(c.invoiced)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Tahsil</div>
+                  <div style={{ fontSize: 13, color: '#7bc49a', fontWeight: 500, marginTop: 2 }}>{fmtTRY(c.paid)}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Kalan</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700, marginTop: 2, color: c.remaining > 0 ? 'var(--blue-light)' : '#7bc49a' }}>{fmtTRY(c.remaining)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <PaymentDrawer
         open={drawerOpen} onClose={() => setDrawerOpen(false)}
