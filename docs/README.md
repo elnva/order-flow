@@ -2,6 +2,7 @@
 
 | Document | What it covers |
 | --- | --- |
+| [ROADMAP.md](ROADMAP.md) | A pragmatic, no-overengineering path from today's prototype to a production-ready product, in shippable phases. |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the current (frontend-only) app is wired: script loading, components, the `localStorage` "data model", and screen map. |
 | [SECURITY.md](SECURITY.md) | Current security posture of the static prototype and the minimum things to get right before/while putting it online. |
 | [rfc/0001-backend-and-auth.md](rfc/0001-backend-and-auth.md) | **Decision record:** options for adding a backend + authentication with minimum effort and acceptable security. Compares Supabase, Firebase, PocketBase and a custom backend; recommends Supabase; includes a proposed data model, RLS policy sketches, and a phased migration plan from `localStorage`. |

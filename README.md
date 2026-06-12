@@ -68,6 +68,7 @@ order-flow/
 ## Documentation
 
 - [docs/README.md](docs/README.md) — documentation index
+- [docs/ROADMAP.md](docs/ROADMAP.md) — **phased plan to reach production without overengineering**
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the frontend is wired together
 - [docs/SECURITY.md](docs/SECURITY.md) — current security posture & must-dos before launch
 - [docs/rfc/0001-backend-and-auth.md](docs/rfc/0001-backend-and-auth.md) — **backend
